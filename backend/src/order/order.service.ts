@@ -14,12 +14,18 @@ export class OrderService {
   constructor(private readonly filmsRepository: FilmsRepository) {}
 
   async create(createOrderDTO: CreateOrderDTO): Promise<TicketDTO[]> {
+    const uniqueFilmIds = [
+      ...new Set(createOrderDTO.tickets.map((t) => t.film)),
+    ];
+    const films = await this.filmsRepository.findMany(uniqueFilmIds);
+
     const results = [];
 
     for (const ticket of createOrderDTO.tickets) {
-      const film = await this.filmsRepository.findById(ticket.film);
-      const schedule = film.schedule.find((s) => s.id === ticket.session);
+      const film = films.find((f) => f.id === ticket.film);
+      if (!film) throw new NotFoundException('Фильм не найден');
 
+      const schedule = film.schedule.find((s) => s.id === ticket.session);
       if (!schedule) throw new NotFoundException('Расписание не найдено');
 
       const seatKey = `${ticket.row}:${ticket.seat}` as SeatPosition;
@@ -28,9 +34,10 @@ export class OrderService {
       }
 
       schedule.taken.push(seatKey);
-      await this.filmsRepository.updateFilm(film);
       results.push({ ...ticket, id: uuidv4() });
     }
+
+    await this.filmsRepository.updateMany(films);
 
     return results;
   }

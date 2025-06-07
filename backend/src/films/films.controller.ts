@@ -17,7 +17,7 @@ interface ScheduleDTORes {
 export class FilmsController {
   constructor(private readonly filmsService: FilmsService) {}
 
-  @Get('/')
+  @Get()
   async getAll(): Promise<FilmsDTORes> {
     const models = await this.filmsService.findAll();
     const films = models.map(filmsModelToDTO);

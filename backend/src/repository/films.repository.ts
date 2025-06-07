@@ -17,7 +17,22 @@ export class FilmsRepository {
     return await this.filmsModel.findOne({ id }).exec();
   }
 
+  async findMany(ids: string[]): Promise<IFilms[]> {
+    return await this.filmsModel.find({ id: { $in: ids } }).exec();
+  }
+
   async updateFilm(film: IFilms): Promise<void> {
     await film.save();
+  }
+
+  async updateMany(films: IFilms[]): Promise<void> {
+    await this.filmsModel.bulkWrite(
+      films.map((film) => ({
+        updateOne: {
+          filter: { id: film.id },
+          update: film,
+        },
+      })),
+    );
   }
 }
