@@ -6,7 +6,13 @@ export const configProvider = {
   useValue: <AppConfig>{
     database: {
       driver: process.env.DATABASE_DRIVER || 'mongodb',
-      url: process.env.DATABASE_URL || 'mongodb://localhost:27017/afisha',
+      host: process.env.DATABASE_HOST || 'localhost',
+      port: Number(process.env.DATABASE_PORT) || '27017',
+      name: process.env.DATABASE_NAME || 'afisha',
+      user: {
+        name: process.env.DATABASE_USERNAME || 'afisha_user',
+        password: process.env.DATABASE_PASSWORD || 'afisha_password',
+      },
     },
     serveStatic: {
       rootPath: process.env.ROOT_PATH || '/public/content/afisha',
@@ -20,9 +26,17 @@ export interface AppConfig {
   serveStatic: AppServeStatic;
 }
 
+type DriverType = 'mongodb' | 'postgres';
+
 export interface AppConfigDatabase {
-  driver: string;
-  url: string;
+  driver: DriverType;
+  host: string;
+  port: number;
+  name: string;
+  user?: {
+    name: string;
+    password: string;
+  };
 }
 
 export interface AppServeStatic {
