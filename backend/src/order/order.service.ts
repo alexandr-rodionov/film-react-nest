@@ -5,13 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateOrderDTO, TicketDTO } from './dto/order.dto';
-import { FilmsRepository } from '../repository/films.repository';
+import { AbstractFilmsRepository } from '../repository/films.repository';
 
 type SeatPosition = `${number}:${number}`;
 
 @Injectable()
 export class OrderService {
-  constructor(private readonly filmsRepository: FilmsRepository) {}
+  constructor(private readonly filmsRepository: AbstractFilmsRepository) {}
 
   async create(createOrderDTO: CreateOrderDTO): Promise<TicketDTO[]> {
     const uniqueFilmIds = [

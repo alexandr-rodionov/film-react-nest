@@ -1,6 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { FilmsService } from './films.service';
-import { filmsModelToDTO } from '../utils/converter';
 import { FilmsDTO, ScheduleDTO } from './dto/films.dto';
 
 interface FilmsDTORes {
@@ -19,8 +18,7 @@ export class FilmsController {
 
   @Get()
   async getAll(): Promise<FilmsDTORes> {
-    const models = await this.filmsService.findAll();
-    const films = models.map(filmsModelToDTO);
+    const films = await this.filmsService.findAll();
 
     return {
       total: films.length,
@@ -30,11 +28,11 @@ export class FilmsController {
 
   @Get(':id/schedule')
   async getSchedule(@Param('id') id: string): Promise<ScheduleDTORes | null> {
-    const model = await this.filmsService.findById(id);
+    const film = await this.filmsService.findById(id);
 
-    if (!model) return null;
+    if (!film) return null;
 
-    const { schedule } = filmsModelToDTO(model);
+    const { schedule } = film;
 
     return {
       total: schedule.length,
