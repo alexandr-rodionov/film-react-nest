@@ -1,0 +1,89 @@
+services:
+  frontend:
+    image: ghcr.io/alexandr-rodionov/frontend:latest
+    container_name: frontend
+    networks:
+      - webnet
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - frontend-data:/usr/share/nginx/html
+    restart: unless-stopped
+
+  backend:
+    image: ghcr.io/alexandr-rodionov/backend:latest
+    container_name: backend
+    networks:
+      - webnet
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    networks:
+      - webnet
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  db:
+    image: postgres:17
+    container_name: db
+    networks:
+      - webnet
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    networks:
+      - webnet
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  webnet:
+    driver: bridge
+
+volumes:
+  frontend-data:
+  db-data:
+  pgadmin-data:
