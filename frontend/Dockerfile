@@ -3,8 +3,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-ARG VITE_API_URL="//localhost/api/afisha"
-ARG VITE_CDN_URL="//localhost/content/afisha"
+ARG VITE_API_URL="//arodionov.nomorepartiessbs.ru/api/afisha"
+ARG VITE_CDN_URL="//arodionov.nomorepartiessbs.ru/content/afisha"
 RUN VITE_API_URL=${VITE_API_URL} VITE_CDN_URL=${VITE_CDN_URL} npm run build
 
 FROM nginx:alpine
