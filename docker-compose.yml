@@ -7,6 +7,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${API_URL}
+        VITE_CDN_URL: ${CDN_URL}
     volumes:
       - frontend-data:/usr/share/nginx/html
     restart: unless-stopped
@@ -32,8 +35,6 @@ services:
       LOGGER_TYPE: ${LOG_TYPE}
       LOGGER_DIR: ${LOG_DIR}
       LOGGER_LEVELS: ${LOG_LEVELS}
-    ports:
-      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -63,7 +64,6 @@ services:
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
-      POSTGRES_DB: postgres
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./backend/test/init_sql:/docker-entrypoint-initdb.d
