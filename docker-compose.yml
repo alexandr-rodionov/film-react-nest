@@ -20,18 +20,27 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      DATABASE_HOST: ${DATABASE_HOST}
-      DATABASE_PORT: ${DATABASE_PORT}
-      DATABASE_NAME: ${DATABASE_NAME}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      PORT: ${PORT}
+      DATABASE_DRIVER: ${DB_DRIVER}
+      DATABASE_HOST: ${DB_HOST}
+      DATABASE_PORT: ${DB_PORT}
+      DATABASE_NAME: ${DB_NAME}
+      DATABASE_USERNAME: ${DB_USERNAME}
+      DATABASE_PASSWORD: ${DB_PASSWORD}
+      ROOT_PATH: ${ROOT_PATH}
+      SERV_ROOT_PATH: ${SERV_ROOT_PATH}
+      LOGGER_TYPE: ${LOG_TYPE}
+      LOGGER_DIR: ${LOG_DIR}
+      LOGGER_LEVELS: ${LOG_LEVELS}
+    ports:
+      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
     restart: on-failure
 
   nginx:
-    image: nginx:stable-alpine
+    image: nginx:alpine
     container_name: nginx
     networks:
       - webnet
@@ -40,24 +49,27 @@ services:
       dockerfile: Dockerfile
     ports:
       - "80:80"
+    volumes:
+      - frontend-data:/usr/share/nginx/html
     depends_on:
       - backend
     restart: unless-stopped
 
   db:
-    image: postgres:17
+    image: postgres:17-alpine
     container_name: db
     networks:
       - webnet
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: postgres
     volumes:
       - db-data:/var/lib/postgresql/data
+      - ./backend/test/init_sql:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
-      interval: 30s
+      interval: 10s
       timeout: 5s
       retries: 5
     restart: always
@@ -68,12 +80,13 @@ services:
     networks:
       - webnet
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
       - "8080:80"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
+      - ./servers.json:/pgadmin4/servers.json
     depends_on:
       db:
         condition: service_healthy
