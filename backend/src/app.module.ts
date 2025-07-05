@@ -8,6 +8,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { FilmsModule } from './films/films.module';
 import { OrderModule } from './order/order.module';
 import { configProvider } from './app.config.provider';
+import { LoggerFactory } from './loggers/logger.factory';
 import { FilmsEntity, ScheduleEntity } from './films/entity/films.entity';
 
 const { database, serveStatic } = configProvider.useValue;
@@ -39,6 +40,6 @@ const { database, serveStatic } = configProvider.useValue;
     FilmsModule,
     OrderModule,
   ],
-  providers: [configProvider],
+  providers: [configProvider, LoggerFactory],
 })
 export class AppModule {}

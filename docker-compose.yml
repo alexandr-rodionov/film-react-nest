@@ -1,0 +1,97 @@
+services:
+  frontend:
+    image: ghcr.io/alexandr-rodionov/frontend:latest
+    container_name: frontend
+    networks:
+      - webnet
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - frontend-data:/usr/share/nginx/html
+    restart: unless-stopped
+
+  backend:
+    image: ghcr.io/alexandr-rodionov/backend:latest
+    container_name: backend
+    networks:
+      - webnet
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      PORT: ${PORT}
+      DATABASE_DRIVER: ${DB_DRIVER}
+      DATABASE_HOST: ${DB_HOST}
+      DATABASE_PORT: ${DB_PORT}
+      DATABASE_NAME: ${DB_NAME}
+      DATABASE_USERNAME: ${DB_USERNAME}
+      DATABASE_PASSWORD: ${DB_PASSWORD}
+      ROOT_PATH: ${ROOT_PATH}
+      SERV_ROOT_PATH: ${SERV_ROOT_PATH}
+      LOGGER_TYPE: ${LOG_TYPE}
+      LOGGER_DIR: ${LOG_DIR}
+      LOGGER_LEVELS: ${LOG_LEVELS}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    networks:
+      - webnet
+    ports:
+      - "80:80"
+    volumes:
+      - frontend-data:/usr/share/nginx/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    container_name: db
+    networks:
+      - webnet
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./backend/test/init_sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    networks:
+      - webnet
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./servers.json:/pgadmin4/servers.json
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  webnet:
+    driver: bridge
+
+volumes:
+  frontend-data:
+  db-data:
+  pgadmin-data:

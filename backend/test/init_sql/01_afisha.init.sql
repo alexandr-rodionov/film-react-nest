@@ -11,6 +11,8 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE USER afisha_user WITH PASSWORD 'afisha_password';
+
 create database afisha
     with owner afisha_user;
 
